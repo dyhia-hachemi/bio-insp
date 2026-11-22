@@ -1,9 +1,8 @@
-"""Démonstration en terminal .
+"""Test de demo.py SANS le vrai algorithme génétique de Y.
 
-Affiche la grille (cases fixes en couleur), la progression par génération,
-puis contrôle le résultat final avec is_valid et respects_fixed.
-
-Utilisation :  python src/demo.py --seed 42 --max-time 60
+On utilise un "faux AG" : il ne cherche rien, il renvoie directement
+une solution connue et appelle le callback comme le vrai AG le ferait.
+Ça permet de vérifier l'affichage et le contrôle final de demo.py.
 """
 import argparse
 import os
