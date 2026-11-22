@@ -1,0 +1,3 @@
+tester l'affichage pour l'instant avec
+python -c "import sys; sys.path.insert(0, 'src'); from demo import afficher_grille; from puzzle import *; p = load_puzzle('data/puzzle.txt'); afficher_grille(p, make_mask(p), 'Test :')"
+car on a pas encore l'AG de Y. Mais on peux tester l'affichage seul  avec la commande dans le terminal

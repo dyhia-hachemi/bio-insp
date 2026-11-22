@@ -8,5 +8,3 @@
 2 7 0 0 0 0 0 3 0
 9 0 0 4 7 0 6 0 0
 
-#matrice  de l'énoncé, un chiffre par case, 0 pour une case vide sa veut dire lorsque on trouve 0 la case est vide car 
-#on ne peut pas remplir un Sudoku classique avec des 0 : les règles exigent d'utiliser uniquement les chiffres de 1 à 9.
