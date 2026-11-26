@@ -1,10 +1,4 @@
-# TP#2 Méthodes bio-inspirées : Sudoku et algorithme génétique
-
-*Module Méthodes bio-inspirées, 5-ING-IA, UMMTO, année 2026/2027. Partie II du TP#2. Date limite de remise : lundi 30 novembre 2026.*
-
-Ce dépôt contient le **code de la Partie II** : résoudre un Sudoku avec un **algorithme génétique (AG)**. Ce document explique ce que fait le projet, pourquoi, comment, pourquoi nous avons fait ces choix, ce que contient chaque fichier, comment lancer et tester, ce qui a été mesuré, et ce qu'il reste à faire.
-
-> Le rapport PDF et les diapositives ne sont **pas** dans ce dépôt : ils sont dans le document partagé du groupe.
+# Méthodes bio-inspirées : Sudoku et algorithme génétique
 
 ## Sommaire
 
@@ -17,12 +11,8 @@ Ce dépôt contient le **code de la Partie II** : résoudre un Sudoku avec un **
 7. [Installation et utilisation](#7-installation-et-utilisation)
 8. [Tests](#8-tests)
 9. [Résultats mesurés et limites actuelles](#9-résultats-mesurés-et-limites-actuelles)
-10. [Ce qu'il reste à faire (X et Z)](#10-ce-quil-reste-à-faire-x-et-z)
-11. [Guide pour ajouter une amélioration à l'AG](#11-guide-pour-ajouter-une-amélioration-à-lag)
-12. [Travail avec Git](#12-travail-avec-git)
-13. [Préparer la démonstration de la soutenance](#13-préparer-la-démonstration-de-la-soutenance)
-14. [Références](#14-références)
-15. [Glossaire](#15-glossaire)
+10. [Guide pour ajouter une amélioration à l'AG](#11-guide-pour-ajouter-une-amélioration-à-lag)
+11. [Glossaire](#15-glossaire)
 
 ---
 
@@ -31,7 +21,7 @@ Ce dépôt contient le **code de la Partie II** : résoudre un Sudoku avec un **
 On reçoit une grille de Sudoku **partiellement remplie**. Le but est de la **compléter** avec un algorithme génétique de façon à obtenir une grille correcte :
 
 - chaque chiffre de 1 à 9 apparaît **une seule fois** dans chaque ligne, chaque colonne et chaque sous-grille 3×3 ;
-- les **chiffres de départ ne sont jamais modifiés** (consigne de l'énoncé) ;
+- les **chiffres de départ ne sont jamais modifiés**;
 - on cherche à y arriver avec **le moins de générations possible**.
 
 ### Pourquoi un algorithme génétique pour un Sudoku ?
@@ -50,7 +40,6 @@ L'énoncé demande d'appliquer l'AG au Sudoku. Le travail demandé et sa réalis
 | Implémenter la sélection, le croisement et la mutation | `src/operators.py` |
 | Essayer d'avoir la solution en un minimum de générations | `src/ga.py` (version de base) ; améliorations et mesures à faire (voir section 10) |
 | Réaliser une démonstration de la solution | `src/demo.py` |
-| Remettre le code source avec le rapport | ce dépôt |
 
 ## 3. Comment fonctionne l'algorithme
 
@@ -142,7 +131,7 @@ Cela garantit que **le meilleur nombre d'erreurs ne remonte jamais** d'une gén�
 | `elite_frac` | part de la population copiée sans changement | 0,05 |
 | `max_gen` | nombre maximal de générations | 1000 |
 
-**Pourquoi `p_mut = 1,0` ?** C'est un choix **mesuré**, pas théorique : sur la grille du sujet (16 graines, 600 générations maximum), `p_mut = 0,2` donne 1 réussite sur 16, `p_mut = 0,5` donne 3 sur 16 et `p_mut = 1,0` donne 8 sur 16. Ces valeurs de départ sont à **affiner par des expériences** (travail de Z).
+Ces valeurs de départ sont à **affiner par des expériences** (travail de Z).
 
 ### 4.8 La graine aléatoire
 
@@ -151,7 +140,7 @@ Une graine est le point de départ du générateur de nombres aléatoires : **m�
 - graine fixe : tests, rapport reproductible, reproduction d'un problème ;
 - graines différentes : mesurer la fiabilité (30 exécutions avec 30 graines) et relancer en cas d'échec.
 
-La graine ne rend pas l'algorithme meilleur : elle fixe seulement *laquelle* des exécutions possibles on observe. Sur la grille du sujet, la graine 42 échoue (bloquée à 2 erreurs après 1000 générations), alors que la graine 43 réussit en 59 générations.
+La graine ne rend pas l'algorithme meilleur : elle fixe seulement *laquelle* des exécutions possibles on observe.
 
 ### 4.9 Validation de la grille de départ
 
@@ -306,8 +295,6 @@ python -m pytest -q tests          # 46 tests
 | `test_validation.py` | grille du sujet valide, doublons ligne/colonne/bloc, mauvaise forme, `run_ga` refuse une grille invalide |
 | `test_demo_relances.py` | relances avec graines successives (faux AG), une seule tentative par défaut, limite du nombre d'essais, limite de temps |
 
-L'avertissement éventuel sur un plugin pytest d'un autre paquet (par exemple `dash`) ne vient pas de ce projet.
-
 ## 9. Résultats mesurés et limites actuelles
 
 > **Ces mesures sont indicatives** : un seul passage, sur une seule machine, avec peu de graines. Z doit les refaire proprement avec `experiments.py` (30 graines ou plus par configuration) avant de les utiliser dans le rapport.
@@ -348,36 +335,7 @@ Les cinq grilles `tres_facile`, `facile`, `moyenne`, `difficile` et `tres_diffic
 - Une grille valide mais **sans solution** n'est pas détectée.
 - La grille de départ est supposée avoir ses chiffres fixes cohérents : `verifier_puzzle` le contrôle, mais pas l'existence d'une solution.
 
-## 10. Ce qu'il reste à faire (X et Z)
-
-### Z : améliorations de l'AG et expériences (priorité haute)
-
-L'énoncé demande d'obtenir la solution **en un minimum de générations**. La version de base est volontairement simple ; son but est d'être correcte, testée et mesurable.
-
-1. **Créer `src/experiments.py`** : lancer `run_ga` avec plusieurs graines (30 ou plus), calculer le taux de réussite, le nombre moyen de générations et le temps, tracer les courbes de convergence (`historique`). Ce script ne dépend que de l'interface décrite à la section 6.
-2. **Implémenter et comparer des améliorations**, chacune activable par un paramètre :
-   - **redémarrage sur stagnation** (par exemple après N générations sans amélioration, réinjecter des individus aléatoires ou repartir de zéro) ;
-   - **mutation adaptative** (plus forte quand l'algorithme stagne) ;
-   - **initialisation plus intelligente** (éviter les doublons de colonne dès le départ) ;
-   - **recherche locale** sur les meilleures grilles pour corriger les dernières erreurs (bonus).
-3. **Régler les paramètres** (`pop_size`, `p_cross`, `p_mut`, `tournament_k`, `elite_frac`, nombre de générations par tentative) avec des mesures, et justifier les valeurs retenues.
-4. **Comparer** : version de base, avec relances de la démo, avec redémarrage sur stagnation, etc., sur les grilles de `data/`.
-5. **Analyser** pourquoi l'algorithme se bloque et l'effet de chaque amélioration (section « résultats » du rapport).
-
-Règle d'arrêt conseillée : deux améliorations et une date limite (vendredi 27 novembre), puis on documente ce qui a été essayé, même si cela n'a pas marché.
-
-### X : démonstration, entretien du dépôt et assemblage
-
-1. **Chargeur de grille plus tolérant** : accepter aussi les points `.` pour les cases vides et les chiffres collés sans espaces (aujourd'hui `load_puzzle` suppose des espaces). C'est utile si l'enseignante modifie le fichier à la main.
-2. Vérifier que `demo.py` modifié convient (validation, graine de départ fixe à 0, relances) et gérer le cas d'une saisie directe de grille si le groupe le souhaite (optionnel).
-3. Garder `data/` à jour avec les grilles de test, et le `.gitignore` sans caractère invisible (BOM).
-4. **Assemblage final** du rapport et du PowerPoint (hors dépôt).
-
-### Y : rapport et soutenance
-
-Rédaction de la section codage, fonction objective, opérateurs et boucle (environ 2,5 pages), diapositives correspondantes, fiches de questions probables.
-
-## 11. Guide pour ajouter une amélioration à l'AG
+## 10. Guide pour ajouter une amélioration à l'AG
 
 1. **Ne changez pas les signatures** de la section 6. Si un paramètre est nécessaire, ajoutez une clé à `PARAMS_PAR_DEFAUT` dans `ga.py`.
 2. **Par défaut, la fonctionnalité doit être désactivée** (par exemple `"restart_stagnation": None`) : sans option, `run_ga` doit se comporter exactement comme la version de base, et les 46 tests doivent continuer à passer.
@@ -385,36 +343,9 @@ Rédaction de la section codage, fonction objective, opérateurs et boucle (envi
 4. **Tout le hasard passe par `rng`**, jamais par `random` directement.
 5. **Comparez avec la version de base sur les mêmes graines et les mêmes grilles** : une amélioration doit être mesurée, pas supposée.
 6. **Une branche par amélioration** (`feature/restart-stagnation`, etc.), pull request relue par une autre personne.
-7. Documentez le résultat dans ce README (section 9) et dans la section « résultats » du rapport.
+7. Documentez le résultat dans ce README (section 9) 
 
-## 12. Travail avec Git
-
-- Une branche par tâche (`feature/nom-de-la-tache`). Pas de travail direct sur `main` pour le code ; passer par une pull request relue par une autre personne.
-- Un commit clair par modification. **Ajouter les fichiers un par un** (`git add src/ga.py tests/test_ga.py`), pas `git add .`.
-- Avant de pousser : `python -m pytest -q tests`.
-- Pour récupérer le travail des autres : `git checkout main`, `git pull origin main`, puis refaire une branche ou fusionner `main` dans la sienne.
-- Ne pas mettre le rapport ni les diapositives dans le dépôt avant la version finale (fichiers binaires qui créent des conflits).
-
-## 13. Préparer la démonstration de la soutenance
-
-- **Commandes sûres pour la grille du sujet** : `python src/demo.py` (graine 0, solution rapide).
-- **L'enseignante peut proposer une autre grille.** La démo accepte `--puzzle chemin.txt` et vérifie la grille avant de commencer. Garder dans `data/` des grilles déjà essayées de plusieurs difficultés et les tester plusieurs fois avant le jour J.
-- **Le résultat n'est pas garanti sur une grille inconnue** (voir section 9). Ne pas promettre que l'algorithme réussit toujours : annoncer le taux de réussite mesuré par Z. Si une démo échoue, elle affiche honnêtement « pas de solution complète » avec le nombre d'erreurs restantes ; expliquer alors le blocage connu et montrer une exécution réussie préparée.
-- **Plan B** : une capture d'écran ou une courte vidéo d'une exécution réussie.
-- Les graines successives rendent la démo **reproductible** : pour une grille donnée, la suite des tentatives est toujours la même.
-
-## 14. Références
-
-À **vérifier sur Google Scholar avant de les citer dans le rapport** (titres, pages, années).
-
-- T. Mantere et J. Koljonen, « Solving, rating and generating Sudoku puzzles with GA », IEEE Congress on Evolutionary Computation (CEC), 2007.
-- X. Q. Deng et Y. D. Li, « A novel hybrid genetic algorithm for solving Sudoku puzzles », Optimization Letters, 2013.
-- A. Moraglio, J. Togelius et S. Lucas, travaux sur le croisement géométrique pour le Sudoku, 2006.
-- Y. Sato et H. Inoue, travaux sur les opérateurs génétiques qui préservent les blocs de construction pour le Sudoku, IEEE CIG, 2010.
-- R. Lewis, « Metaheuristics can solve Sudoku puzzles », Journal of Heuristics, 2007.
-- B. Felgenhauer et F. Jarvis, dénombrement des grilles de Sudoku (environ 6,67 × 10²¹ grilles complètes), 2005.
-
-## 15. Glossaire
+## 11. Glossaire
 
 - **Individu** : une grille candidate.
 - **Population** : l'ensemble des grilles d'une génération.
