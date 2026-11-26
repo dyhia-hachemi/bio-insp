@@ -4,6 +4,7 @@ from puzzle import make_mask
 from encoding import init_population
 from fitness import fitness
 from operators import tournament, crossover, mutate
+from validation import verifier_puzzle
 
 # Valeurs utilisées quand l'appelant ne donne pas un paramètre
 PARAMS_PAR_DEFAUT = {
@@ -29,6 +30,11 @@ def run_ga(puzzle, params=None, callback=None):
     où historique contient le meilleur nombre d'erreurs de chaque génération.
     callback(gen, meilleure_grille, meilleure_note) est appelé à chaque génération.
     """
+    # refuser une grille de départ invalide, avec un message clair
+    problemes = verifier_puzzle(puzzle)
+    if problemes:
+        raise ValueError("Grille de départ invalide :\n- " + "\n- ".join(problemes))
+    
     # paramètres : valeurs par défaut
     cfg = dict(PARAMS_PAR_DEFAUT)
     if params:
