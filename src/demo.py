@@ -1,8 +1,10 @@
-"""Test de demo.py SANS le vrai algorithme génétique de Y.
+"""Démonstration de l'algorithme génétique pour le Sudoku.
 
-On utilise un "faux AG" : il ne cherche rien, il renvoie directement
-une solution connue et appelle le callback comme le vrai AG le ferait.
-Ça permet de vérifier l'affichage et le contrôle final de demo.py.
+Lance l'AG sur une grille, affiche la progression par génération, puis
+contrôle le résultat. Si une tentative n'aboutit pas, la démo relance
+automatiquement avec la graine suivante (graine, graine+1, ...) jusqu'à
+trouver une solution ou atteindre la limite de temps. Pour une grille et une
+graine de départ données, la suite des tentatives est toujours la même.
 """
 import argparse
 import os
@@ -45,14 +47,26 @@ def afficher_grille(grid, mask, titre=""):
     print(GRIS + "+-------+-------+-------+" + RESET)
 
 
-def lancer_demo(run_ga, puzzle, mask, params, max_time=60, pas=10):
-    """Lance l'AG, affiche la progression, puis le résultat contrôlé."""
+def lancer_demo(run_ga, puzzle, mask, params, max_time=60, pas=10,
+                max_gen_par_essai=None, max_essais=1):
+    """Lance l'AG, affiche la progression, puis le résultat contrôlé.
+
+    max_essais = 1 : une seule tentative (comportement d'origine).
+    max_essais = None : on relance avec la graine suivante, sans limite de
+    nombre, jusqu'à la solution ou la limite de temps (max_time).
+    max_gen_par_essai : nombre maximal de générations d'une tentative.
+    """
     debut = time.time()
-    dernier = {"grid": None, "gen": 0, "fit": None}
+    # meilleure grille vue sur l'ensemble des tentatives (si on coupe l'AG)
+    meilleur = {"grid": None, "gen": 0, "fit": None, "essai": 0, "graine": None}
+    courant = {"essai": 0, "graine": None}
+    graine_depart = params.get("seed")
+    relances = max_essais != 1
 
     def callback(gen, best_grid, best_fitness):
-        # On garde la meilleure grille vue, au cas où on coupe l'AG.
-        dernier.update(grid=best_grid, gen=gen, fit=best_fitness)
+        if meilleur["fit"] is None or best_fitness < meilleur["fit"]:
+            meilleur.update(grid=best_grid, gen=gen, fit=best_fitness,
+                            essai=courant["essai"], graine=courant["graine"])
         if gen % pas == 0 or best_fitness == 0:
             print(f"Génération {gen:5d} | erreurs (fitness) = {best_fitness:3d}"
                   f" | {time.time() - debut:5.1f} s")
@@ -61,15 +75,37 @@ def lancer_demo(run_ga, puzzle, mask, params, max_time=60, pas=10):
 
     afficher_grille(puzzle, mask, "Grille de départ :")
     print()
+
+    essai = 0
+    grille, nb_gen, graine = None, 0, graine_depart
     try:
-        grille, nb_gen, historique = run_ga(puzzle, params, callback=callback)
+        while True:
+            essai += 1
+            p = dict(params)
+            if graine_depart is not None:
+                graine = graine_depart + essai - 1
+                p["seed"] = graine
+            if max_gen_par_essai:
+                p["max_gen"] = max_gen_par_essai
+            courant.update(essai=essai, graine=graine)
+            if relances:
+                print(f"--- Tentative {essai} (graine {graine}) ---")
+            grille, nb_gen, _ = run_ga(puzzle, p, callback=callback)
+            if is_valid(grille) and respects_fixed(grille, puzzle, mask):
+                break
+            if max_essais is not None and essai >= max_essais:
+                break
+            print("Pas de solution cette fois : on relance avec la graine suivante.\n")
     except TempsEcoule:
         print(f"\nLimite de {max_time} s atteinte : on affiche la meilleure grille trouvée.")
-        grille, nb_gen = dernier["grid"], dernier["gen"]
+        grille, nb_gen = meilleur["grid"], meilleur["gen"]
+        essai, graine = meilleur["essai"], meilleur["graine"]
 
     duree = time.time() - debut
     print()
-    afficher_grille(grille, mask, f"Grille finale ({nb_gen} générations, {duree:.1f} s) :")
+    detail = f"tentative {essai}, graine {graine}, " if relances else ""
+    afficher_grille(grille, mask,
+                    f"Grille finale ({detail}{nb_gen} générations, {duree:.1f} s) :")
 
     # Contrôle final : deux vérifications différentes
     ok_regles = is_valid(grille)
@@ -85,18 +121,35 @@ def lancer_demo(run_ga, puzzle, mask, params, max_time=60, pas=10):
 
 def main():
     parser = argparse.ArgumentParser(description="Démo AG pour le Sudoku")
-    parser.add_argument("--seed", type=int, default=42, help="graine aléatoire")
+    parser.add_argument("--seed", type=int, default=0,
+                        help="graine de départ (les relances utilisent seed+1, seed+2, ...)")
     parser.add_argument("--max-time", type=float, default=60, help="limite de temps (s)")
+    parser.add_argument("--gen-par-essai", type=int, default=300,
+                        help="nombre maximal de générations d'une tentative")
     parser.add_argument("--puzzle", default=os.path.join(
         os.path.dirname(__file__), "..", "data", "puzzle.txt"))
     args = parser.parse_args()
 
-    from ga import run_ga  # import ici : le fichier de Y doit exister
+    from ga import run_ga
 
-    puzzle = load_puzzle(args.puzzle)
+    try:
+        puzzle = load_puzzle(args.puzzle)
+    except (OSError, ValueError) as e:
+        print("Impossible de lire la grille :", e)
+        return
+    from validation import verifier_puzzle
+    problemes = verifier_puzzle(puzzle)
+    if problemes:
+        print("Grille de départ invalide :")
+        for pb in problemes:
+            print(" -", pb)
+        return
     mask = make_mask(puzzle)
-    params = {"seed": args.seed}  # TODO: se mettre d'accord avec Y sur les noms des paramètres
-    lancer_demo(run_ga, puzzle, mask, params, max_time=args.max_time)
+    print("Graine de départ :", args.seed,
+          "(en cas d'échec, la démo relance avec la graine suivante)\n")
+    params = {"seed": args.seed}
+    lancer_demo(run_ga, puzzle, mask, params, max_time=args.max_time,
+                max_gen_par_essai=args.gen_par_essai, max_essais=None)
 
 
 if __name__ == "__main__":
